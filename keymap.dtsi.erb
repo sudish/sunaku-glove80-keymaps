@@ -1,8 +1,8 @@
-// NOTE: Use the `#define` settings below to customize this keymap!
-// For example, here are the main optional features you can enable:
-#define DIFFICULTY_LEVEL  0 // 0:custom, 1:easy -> 5:hard (see below)
-#define ENFORCE_BILATERAL   // cancels single-handed home row mod+tap
-#define WORLD_USE_COMPOSE   // use native Compose in place of Unicode
+// NOTE: Use the many #define settings below to customize this keymap!
+#define OPERATING_SYSTEM 'L' // choose 'L'inux, 'M'acOS, or 'W'indows
+#define DIFFICULTY_LEVEL  0  // 0:custom, 1:easy -> 5:hard (see below)
+#define ENFORCE_BILATERAL    // cancels single-handed home row mod+tap
+#define WORLD_USE_COMPOSE    // use native Compose in place of Unicode
 // TIP: Add more setting overrides here instead of editing them below.
 
 #define OPERATING_SYSTEM 'W' // windows
@@ -22,43 +22,22 @@
 //////////////////////////////////////////////////////////////////////////////
 
 //
-// DIFFICULTY_LEVEL specifies your level of expertise with this keymap.
-// It's meant to help newcomers gradually work their way up to mastery.
-// You can disable this setting by omitting it or assigning a `0` zero.
-//
-// #define DIFFICULTY_LEVEL 0 // custom (see defaults below)
-// #define DIFFICULTY_LEVEL 1 // novice (500ms)
-// #define DIFFICULTY_LEVEL 2 // slower (400ms)
-// #define DIFFICULTY_LEVEL 3 // normal (300ms)
-// #define DIFFICULTY_LEVEL 4 // faster (200ms)
-// #define DIFFICULTY_LEVEL 5 // expert (100ms)
-//
-#if defined(DIFFICULTY_LEVEL) && DIFFICULTY_LEVEL > 0
-#define DIFFICULTY_LEVEL_HOLDING_TIME  ((6 - DIFFICULTY_LEVEL) * 100)
-#define DIFFICULTY_LEVEL_STREAK_DECAY (((6 - DIFFICULTY_LEVEL) *  50) + 100)
-<%
-  emit_setting_ifndef = lambda do |name, value|
-%>
-#ifndef <%= name %>
-#define <%= name %> <%= value %>
-#endif
-<%
-  end
-
-  %w[ HOMEY INDEX PLAIN SPACE ].each do |category|
-    %w[ HOLDING_TIME STREAK_DECAY ].each do |setting|
-      emit_setting_ifndef.("#{category}_#{setting}", "DIFFICULTY_LEVEL_#{setting}")
-    end
-  end
-%>
-#endif
-
-//
 // OPERATING_SYSTEM defines which operating system you intend to use
 // with this keymap, because shortcuts vary across operating systems.
 //
 // - https://zmk.dev/docs/codes
 // - https://en.wikipedia.org/wiki/Table_of_keyboard_shortcuts
+//
+// This setting also affects the UNICODE() function defined below, as
+// each OS has different shortcuts for typing Unicode hex characters.
+//
+// NOTE: You may need to enable Unicode hexadecimal input in your OS:
+// - (macOS) https://sevenseacat.net/posts/2018/unicode-in-qmk-on-osx/
+// - (Linux) https://help.ubuntu.com/stable/ubuntu-help/tips-specialchars.html.en#ctrlshiftu
+// - (Windows) https://github.com/samhocevar/wincompose
+//
+// Specifically, Windows users should be running the WinCompose tool,
+// which lets you type Unicode characters via hexadecimal codepoints.
 //
 #ifndef OPERATING_SYSTEM
 <%
@@ -284,6 +263,13 @@ combos {
         layers = <<%= (0...ALPHA_LAYERS_COUNT).to_a.join(" ") %>>;
     };
     #endif
+
+    combo_ctrl_tab_switcher {
+        timeout-ms = <COMBO_FIRING_DECAY>;
+        key-positions = <POS_LH_T4 POS_LH_T5>;
+        bindings = <&mod_tab_chord LCTL LAYER_Cursor>;
+        layers = <<%= (0...ALPHA_LAYERS_COUNT).to_a.join(" ") %>>;
+    };
 };
 
 behaviors {
@@ -295,6 +281,38 @@ behaviors {
     // - https://github.com/urob/zmk-config#timeless-homerow-mods
     //
     //////////////////////////////////////////////////////////////////////////
+
+    //
+    // DIFFICULTY_LEVEL specifies your level of expertise with this keymap.
+    // It's meant to help newcomers gradually work their way up to mastery.
+    // You can disable this setting by omitting it or assigning a `0` zero.
+    //
+    // #define DIFFICULTY_LEVEL 0 // custom (see defaults below)
+    // #define DIFFICULTY_LEVEL 1 // novice (500ms)
+    // #define DIFFICULTY_LEVEL 2 // slower (400ms)
+    // #define DIFFICULTY_LEVEL 3 // normal (300ms)
+    // #define DIFFICULTY_LEVEL 4 // faster (200ms)
+    // #define DIFFICULTY_LEVEL 5 // expert (100ms)
+    //
+    #if defined(DIFFICULTY_LEVEL) && DIFFICULTY_LEVEL > 0
+    #define DIFFICULTY_LEVEL_HOLDING_TIME  ((6 - DIFFICULTY_LEVEL) * 100)
+    #define DIFFICULTY_LEVEL_STREAK_DECAY (((6 - DIFFICULTY_LEVEL) *  50) + 100)
+    <%
+      emit_setting_ifndef = lambda do |name, value|
+    %>
+    #ifndef <%= name %>
+    #define <%= name %> <%= value %>
+    #endif
+    <%
+      end
+
+      %w[ HOMEY INDEX PLAIN SPACE ].each do |category|
+        %w[ HOLDING_TIME STREAK_DECAY ].each do |setting|
+          emit_setting_ifndef.("#{category}_#{setting}", "DIFFICULTY_LEVEL_#{setting}")
+        end
+      end
+    %>
+    #endif
 
     //
     // ENFORCE_BILATERAL cancels out single-handed home row mods activation by
@@ -958,6 +976,21 @@ behaviors {
     #define STICKY_1SHOT_DECAY 500
     #endif
 
+    //
+    // STICKY_HOLDING_TIME defines how long you need to hold (milliseconds)
+    // sticky one-shot keys in order to trigger their hold (not tap) action.
+    //
+    #ifndef STICKY_HOLDING_TIME
+    #define STICKY_HOLDING_TIME CHORD_HOLDING_TIME
+    #endif
+
+    sticky_key_modtap: sticky_key_modtap {
+        compatible = "zmk,behavior-hold-tap";
+        flavor = "tap-preferred";
+        tapping-term-ms = <STICKY_HOLDING_TIME>;
+        #binding-cells = <2>;
+        bindings = <&kp>, <&sticky_key_oneshot>;
+    };
     sticky_key_oneshot: sticky_key_oneshot_macro {
         compatible = "zmk,behavior-macro-one-param";
         wait-ms = <0>;
@@ -1166,23 +1199,6 @@ macros {
     //#define WORLD_USE_COMPOSE
 
     //
-    // UNICODE_TARGET_OS defines which operating system you're targeting
-    // for the UNICODE() preprocessor macro to be used on, since each OS
-    // has different shortcuts for typing Unicode characters as hexcodes.
-    //
-    // NOTE: You may need to enable Unicode hexadecimal input in your OS:
-    // - (macOS) https://sevenseacat.net/posts/2018/unicode-in-qmk-on-osx/
-    // - (Linux) https://help.ubuntu.com/stable/ubuntu-help/tips-specialchars.html.en#ctrlshiftu
-    // - (Windows) https://github.com/samhocevar/wincompose
-    //
-    // Specifically, Windows users should be running the WinCompose tool,
-    // which lets you type Unicode characters via hexadecimal codepoints.
-    //
-    #ifndef UNICODE_TARGET_OS
-    #define UNICODE_TARGET_OS OPERATING_SYSTEM
-    #endif
-
-    //
     // UNICODE_TAP_DELAY defines how long the macro waits (milliseconds)
     // between keystrokes while inputting the Unicode codepoint shortcut.
     //
@@ -1296,15 +1312,15 @@ macros {
         <&macro_release &kp LALT>
     #endif
 
-    #if UNICODE_TARGET_OS == <%= OPERATING_SYSTEMS[:linux] %>
+    #if OPERATING_SYSTEM == <%= OPERATING_SYSTEMS[:linux] %>
         #define UNICODE_MORPH_MODS (MOD_LCTL|MOD_LSFT)
-    #elif UNICODE_TARGET_OS == <%= OPERATING_SYSTEMS[:macos] %>
+    #elif OPERATING_SYSTEM == <%= OPERATING_SYSTEMS[:macos] %>
         #define UNICODE_MORPH_MODS MOD_LALT
-    #elif UNICODE_TARGET_OS == <%= OPERATING_SYSTEMS[:windows] %>
+    #elif OPERATING_SYSTEM == <%= OPERATING_SYSTEMS[:windows] %>
         #define UNICODE_MORPH_MODS MOD_RALT
     #endif
 
-    #if UNICODE_TARGET_OS == <%= OPERATING_SYSTEMS[:linux] %>
+    #if OPERATING_SYSTEM == <%= OPERATING_SYSTEMS[:linux] %>
         // $ grep "compose:" /usr/share/X11/xkb/rules/base.lst
         // compose:ralt         Right Alt
         #if COMPOSE_KEY_LINUX == RALT
@@ -1351,9 +1367,9 @@ macros {
         #else
             #define COMPOSE_MORPH_MODS 0
         #endif
-    #elif UNICODE_TARGET_OS == <%= OPERATING_SYSTEMS[:macos] %>
+    #elif OPERATING_SYSTEM == <%= OPERATING_SYSTEMS[:macos] %>
         #define COMPOSE_MORPH_MODS 0
-    #elif UNICODE_TARGET_OS == <%= OPERATING_SYSTEMS[:windows] %>
+    #elif OPERATING_SYSTEM == <%= OPERATING_SYSTEMS[:windows] %>
         #define COMPOSE_MORPH_MODS MOD_LALT
     #endif
 
@@ -1473,7 +1489,7 @@ macros {
             sequence.insert(1, "<&macro_wait_time UNICODE_SEQ_DELAY>")
           end
     %>
-      #<%= "el" if os_index > 0 %>if UNICODE_TARGET_OS == <%= os_char %>
+      #<%= "el" if os_index > 0 %>if OPERATING_SYSTEM == <%= os_char %>
     <%
           localization_for_os = localizations[os.to_s] if localizations
 
