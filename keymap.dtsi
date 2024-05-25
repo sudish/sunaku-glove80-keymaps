@@ -255,10 +255,10 @@
 #define KEY_LH_C2R5 V
 #define KEY_LH_C1R5 B
 #define KEY_LH_T1 ESC
-#define KEY_LH_T2 PG_UP
-#define KEY_LH_T3 HOME
-#define KEY_RH_T3 END
-#define KEY_RH_T2 PG_DN
+#define KEY_LH_T2 PG_DN
+#define KEY_LH_T3 END
+#define KEY_RH_T3 HOME
+#define KEY_RH_T2 PG_UP
 #define KEY_RH_T1 TAB
 #define KEY_RH_C1R5 N
 #define KEY_RH_C2R5 M
@@ -268,8 +268,8 @@
 #define KEY_RH_C6R5 RSHFT
 #define KEY_LH_C6R6 0
 #define KEY_LH_C5R6 LEFT
-#define KEY_LH_C4R6 UP
-#define KEY_LH_C3R6 DOWN
+#define KEY_LH_C4R6 DOWN
+#define KEY_LH_C3R6 UP
 #define KEY_LH_C2R6 RIGHT
 #define KEY_LH_T4 BACKSPACE
 #define KEY_LH_T5 DELETE
