@@ -12,6 +12,9 @@
 #define MIDDY_FINGER_MOD LALT
 #define INDEX_FINGER_MOD LGUI
 
+// default is 150, too short for us. THUMB_REPEAT_DECAY's 300 is a better fit.
+#define SPACE_REPEAT_DECAY 300
+
 // Seach ahead for 'Sudish' to see other changes by us.
 
 
